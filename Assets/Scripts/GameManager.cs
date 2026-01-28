@@ -2,12 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using static UnityEngine.GraphicsBuffer;
 using static UnityEngine.InputSystem.OnScreen.OnScreenStick;
 
 public class GameManager : MonoBehaviour
 {
+    public Image screen;
     GameObject healthBar;
     GameObject camera;
 
@@ -57,7 +59,31 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        StartCoroutine(GameLogic());
+        StartCoroutine(Begin());
+    }
+
+    IEnumerator Begin()
+    {
+        yield return StartCoroutine(EnterAnimation());
+        yield return StartCoroutine(GameLogic());
+    }
+    IEnumerator EnterAnimation()
+    {
+        screen.gameObject.SetActive(true);
+        float duration = 1f;
+        float start = 1f;
+        float target = 0f;
+        float elapsed = 0f;
+        Color baseColour = screen.color;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            t = EasingFunctions.EaseOutCubic(t);
+            float a = Mathf.Lerp(start, target, t);
+            screen.color = new Color(baseColour.r, baseColour.g, baseColour.b, a);
+            yield return null; // wait one frame
+        }
     }
 
     // Update is called once per frame

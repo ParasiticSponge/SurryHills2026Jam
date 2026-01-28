@@ -7,5 +7,8 @@ public class Actions : MonoBehaviour
 {
     public static Action<string, sbyte> SendSerial;
     public static Action<GameObject> collision;
-    public static Action triggered;
+    public static Action Begin;
+
+    public static Action<GameObject> Hover;
+    public static Action<GameObject> HoverExit;
 }
