@@ -1,10 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
+using static UnityEngine.GraphicsBuffer;
 using static UnityEngine.InputSystem.OnScreen.OnScreenStick;
 
 public class GameManager : MonoBehaviour
 {
+    GameObject healthBar;
+    GameObject camera;
+
+    public Slider waveSlider;
+
     public GameObject entity;
     public List<Sprite> head;
     public List<Sprite> mask;
@@ -14,6 +22,8 @@ public class GameManager : MonoBehaviour
     List<List<Sprite>> parts;
 
     GameObject player;
+    public float health = 100;
+    float damage = 20;
 
     float[] laneXPos = new float[] {-4.45f, -0.95f, 2.65f, 6.3f};
     float laneYPos = 6.6f;
@@ -27,15 +37,26 @@ public class GameManager : MonoBehaviour
     int currentTime = 120;
     public float speed = 1f;
 
+    public void OnEnable()
+    {
+        Actions.SendSerial += EvalSignal;
+    }
+    public void OnDisable()
+    {
+        Actions.SendSerial -= EvalSignal;
+    }
     private void Awake()
     {
         //Create a reference to the parts
         parts = new List<List<Sprite>> { head, mask, top, bottom, hand };
+        player = FindObjectOfType<PlayerBehaviour>().gameObject;
+        healthBar = FindObjectOfType<HealthBar>().gameObject;
+        camera = FindObjectOfType<Camera>().gameObject;
     }
+
     // Start is called before the first frame update
     void Start()
     {
-        player = FindObjectOfType<PlayerBehaviour>().gameObject;
         StartCoroutine(GameLogic());
     }
 
@@ -52,18 +73,66 @@ public class GameManager : MonoBehaviour
             RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
 
             // Check if the ray hit any collider
-            if (hit.collider != null)
+            if (hit.collider != null && hit.collider.gameObject.GetComponent<LaneBehaviour>() != null)
             {
-                Debug.Log("Clicked on: " + hit.collider.gameObject.name);
+                //Debug.Log("Clicked on: " + hit.collider.gameObject.name);
                 player.transform.position = hit.collider.transform.position;
             }
         }
     }
+    void EvalSignal(string serial, sbyte status)
+    {
+        print(waveSerial);
+        print(serial);
+        switch (status)
+        {
+            case 1:
+                if (serial == waveSerial)
+                    StartCoroutine(TakeDamage());
+                break;
+            case -1:
+                if (serial != waveSerial)
+                    StartCoroutine(TakeDamage());
+                break;
+            default:
+                break;
+        }
+    }
 
+    IEnumerator TakeDamage()
+    {
+        camera.GetComponent<Shake>().start = true;
+        float duration = 0.5f;
+        float startHealth = health;
+        float targetHealth = Mathf.Max(health - damage, 0f);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            //health = Mathf.Lerp(startHealth, targetHealth, elapsed / duration);
+            float t = elapsed / duration;
+            t = EasingFunctions.EaseOutCubic(t);
+            health = Mathf.Lerp(startHealth, targetHealth, t);
+            Slider slider = healthBar.GetComponent<Slider>();
+            slider.value = Mathf.Lerp(startHealth, targetHealth, t);
+            healthBar.GetComponent<HealthBar>().fill.color = healthBar.GetComponent<HealthBar>().gradient.Evaluate(slider.normalizedValue);
+
+            yield return null; // wait one frame
+        }
+
+        health = targetHealth;
+
+        if (health <= 0f)
+            StartCoroutine(GameOver());
+    }
     IEnumerator GameLogic()
     {
-        yield return StartCoroutine(BeginWave());
-        yield return StartCoroutine(SpawnLoop());
+        if (health > 0)
+        {
+            yield return StartCoroutine(BeginWave());
+            yield return StartCoroutine(SpawnLoop());
+        }
     }
 
     IEnumerator Intro()
@@ -74,6 +143,22 @@ public class GameManager : MonoBehaviour
 
     IEnumerator BeginWave()
     {
+        float duration = 1f;
+        float start = 0;
+        float target = waveSlider.maxValue;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            t = EasingFunctions.EaseOutCubic(t);
+            waveSlider.value = Mathf.Lerp(start, target, t);
+            yield return null; // wait one frame
+        }
+
+        //change wave number
+        yield return new WaitForSeconds(2f);
         waveNum++;
         waveSerial = "";
         waveStart = true;
@@ -82,15 +167,34 @@ public class GameManager : MonoBehaviour
             int randomiser = Random.Range(0, parts[i].Count);
             waveSerial += randomiser.ToString();
         }
-        yield return 0;
+
+        duration = 1f;
+        start = waveSlider.maxValue;
+        target = 0;
+        elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            t = EasingFunctions.EaseOutCubic(t);
+            waveSlider.value = Mathf.Lerp(start, target, t);
+            yield return null; // wait one frame
+        }
     }
 
     IEnumerator SpawnLoop()
     {
-        while (waveStart)
+        float duration = 120f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
         {
+            elapsed += Time.deltaTime;
             yield return StartCoroutine(SpawnEntity());
         }
+
+        StartCoroutine(GameLogic());
     }
     IEnumerator SpawnEntity()
     {
@@ -123,6 +227,11 @@ public class GameManager : MonoBehaviour
             behaviour.serial += randomiser.ToString();
             renderer.sprite = parts[i][randomiser];
         }
-        print(behaviour.serial);
+        //print(behaviour.serial);
+    }
+
+    IEnumerator GameOver()
+    {
+        yield return 0;
     }
 }

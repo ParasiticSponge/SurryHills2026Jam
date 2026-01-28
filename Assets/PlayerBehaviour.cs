@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -12,6 +13,8 @@ public class PlayerBehaviour : MonoBehaviour
     InputAction admit;
     InputAction decline;
 
+    GameObject interaction;
+
     private void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
@@ -22,12 +25,14 @@ public class PlayerBehaviour : MonoBehaviour
     {
         admit.performed += OnAdmit;
         decline.performed += OnDecline;
+        Actions.collision += Collision;
     }
 
     void OnDisable()
     {
         admit.performed -= OnAdmit;
         decline.performed -= OnDecline;
+        Actions.collision -= Collision;
     }
 
     // Start is called before the first frame update
@@ -44,12 +49,31 @@ public class PlayerBehaviour : MonoBehaviour
 
     private void OnAdmit(InputAction.CallbackContext context)
     {
-        Debug.Log("Admit triggered");
+        if (interaction != null)
+        {
+            interaction.GetComponent<EntityBehaviour>().TriggerAdmit.Invoke(1);
+            Debug.Log("Admitted");
+        }
+        interaction = null;
     }
 
     private void OnDecline(InputAction.CallbackContext context)
     {
-        Debug.Log("Decline triggered");
+        if (interaction != null)
+        {
+            interaction.GetComponent<EntityBehaviour>().TriggerAdmit.Invoke(-1);
+            Debug.Log("Declined");
+        }
+        interaction = null;
     }
 
+    void Collision(GameObject collider)
+    {
+        EntityBehaviour comp = collider.GetComponent<EntityBehaviour>();
+        if (comp != null && comp.canInteract == true)
+        {
+            print("found object");
+            interaction = collider;
+        }
+    }
 }
