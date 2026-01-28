@@ -9,6 +9,8 @@ using static UnityEngine.InputSystem.OnScreen.OnScreenStick;
 
 public class GameManager : MonoBehaviour
 {
+    public GameObject tutorial;
+
     public Image screen;
     GameObject healthBar;
     GameObject camera;
@@ -27,7 +29,7 @@ public class GameManager : MonoBehaviour
     public float health = 100;
     float damage = 20;
 
-    float[] laneXPos = new float[] {-4.45f, -0.95f, 2.65f, 6.3f};
+    float[] laneXPos = new float[] { -5.25f, -1.1f, 3.1f, 7.25f};
     float laneYPos = 6.6f;
     string[] partNames = new string[] { "head", "mask", "top", "bottom", "hand" };
     float[] partPositions = new float[] { 1.2f, 0.75f, -0.15f, -0.75f, 0 };
@@ -42,10 +44,12 @@ public class GameManager : MonoBehaviour
     public void OnEnable()
     {
         Actions.SendSerial += EvalSignal;
+        Actions.Begin += StartGame;
     }
     public void OnDisable()
     {
         Actions.SendSerial -= EvalSignal;
+        Actions.Begin -= StartGame;
     }
     private void Awake()
     {
@@ -54,11 +58,14 @@ public class GameManager : MonoBehaviour
         player = FindObjectOfType<PlayerBehaviour>().gameObject;
         healthBar = FindObjectOfType<HealthBar>().gameObject;
         camera = FindObjectOfType<Camera>().gameObject;
+        tutorial.SetActive(true);
     }
 
     // Start is called before the first frame update
-    void Start()
+    void StartGame()
     {
+        waveSlider.value = 0;
+        print("start");
         StartCoroutine(Begin());
     }
 
@@ -69,6 +76,7 @@ public class GameManager : MonoBehaviour
     }
     IEnumerator EnterAnimation()
     {
+        print("enter anim");
         screen.gameObject.SetActive(true);
         float duration = 1f;
         float start = 1f;
@@ -84,6 +92,7 @@ public class GameManager : MonoBehaviour
             screen.color = new Color(baseColour.r, baseColour.g, baseColour.b, a);
             yield return null; // wait one frame
         }
+        TutorialPage.changeNumber.Invoke(1);
     }
 
     // Update is called once per frame
@@ -154,6 +163,7 @@ public class GameManager : MonoBehaviour
     }
     IEnumerator GameLogic()
     {
+        print("game");
         if (health > 0)
         {
             yield return StartCoroutine(BeginWave());
