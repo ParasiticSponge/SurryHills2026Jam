@@ -52,7 +52,6 @@ public class PlayerBehaviour : MonoBehaviour
         if (interaction != null)
         {
             interaction.GetComponent<EntityBehaviour>().TriggerAdmit.Invoke(1);
-            Debug.Log("Admitted");
         }
         interaction = null;
     }
@@ -62,7 +61,6 @@ public class PlayerBehaviour : MonoBehaviour
         if (interaction != null)
         {
             interaction.GetComponent<EntityBehaviour>().TriggerAdmit.Invoke(-1);
-            Debug.Log("Declined");
         }
         interaction = null;
     }
@@ -72,7 +70,6 @@ public class PlayerBehaviour : MonoBehaviour
         EntityBehaviour comp = collider.GetComponent<EntityBehaviour>();
         if (comp != null && comp.canInteract == true)
         {
-            print("found object");
             interaction = collider;
         }
     }

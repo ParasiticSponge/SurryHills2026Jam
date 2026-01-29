@@ -6,8 +6,6 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using static UnityEngine.GraphicsBuffer;
-using static UnityEngine.InputSystem.OnScreen.OnScreenStick;
 
 public class GameManager : MonoBehaviour
 {
@@ -44,11 +42,12 @@ public class GameManager : MonoBehaviour
     public Slider waveSlider;
 
     public GameObject entity;
-    public List<Sprite> head;
-    public List<Sprite> mask;
     public List<Sprite> top;
-    public List<Sprite> bottom;
     public List<Sprite> hand;
+    public List<Sprite> accessory;
+    public List<Sprite> hair;
+    public List<Sprite> mask;
+    public List<Sprite> head;
     List<List<Sprite>> parts;
 
     GameObject player;
@@ -60,7 +59,7 @@ public class GameManager : MonoBehaviour
     string[] partNames = new string[] { "top", "hand", "accessory", "hair", "mask", "head" };
     float[] partPositions = new float[] { -0.197f, 0, 0.111f, 0.741f, 0.558f, 1.02f };
     float[] partZIndex = new float[] { -0.01f, -0.02f, -0.03f, -0.04f, -0.05f, -0.06f };
-    Vector3[] partScales = new Vector3[] { new Vector3(1, 1, 1), new Vector3(1, 1, 1), new Vector3(1.1f, 0.7f, 1), new Vector3(1, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 1, 1) };
+    Vector3[] partScales = new Vector3[] { new Vector3(1, 1, 1), new Vector3(1, 1, 1), new Vector3(1.1f, 0.7f, 1), new Vector3(1, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 0.8f, 1) };
 
     public bool waveStart = false;
     int waveNum = 0;
@@ -79,6 +78,7 @@ public class GameManager : MonoBehaviour
         Actions.Begin += StartGame;
         Actions.pauseGame += Pause;
         Actions.restartGame += ResetGame;
+        Actions.Angry += EntityAngry;
     }
     public void OnDisable()
     {
@@ -86,11 +86,12 @@ public class GameManager : MonoBehaviour
         Actions.Begin -= StartGame;
         Actions.pauseGame -= Pause;
         Actions.restartGame -= ResetGame;
+        Actions.Angry -= EntityAngry;
     }
     private void Awake()
     {
         //Create a reference to the parts
-        parts = new List<List<Sprite>> { top, mask, top, bottom, hand };
+        parts = new List<List<Sprite>> { top, hand, accessory, hair, mask, head };
         player = FindObjectOfType<PlayerBehaviour>().gameObject;
         healthBar = FindObjectOfType<HealthBar>().gameObject;
         camera = FindObjectOfType<Camera>().gameObject;
@@ -128,12 +129,13 @@ public class GameManager : MonoBehaviour
 
     private void ResetGame()
     {
-        Time.timeScale = 1;
-        speed = 1f;
-        spawnRateMin = 20;
-        spawnRateMax = 30;
-        waveNum = 0;
-        StartGame();
+        //Time.timeScale = 1;
+        //speed = 1f;
+        //spawnRateMin = 20;
+        //spawnRateMax = 30;
+        //waveNum = 0;
+        //StartGame();
+        SceneManager.LoadScene(1);
     }
 
     // Start is called before the first frame update
@@ -178,15 +180,24 @@ public class GameManager : MonoBehaviour
             // Convert the mouse position from screen space to world space
             Vector2 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-            // Cast a ray from the mouse position in any direction (Vector2.zero for a single point)
-            RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
+            int laneMask = LayerMask.GetMask("Lane");
 
-            // Check if the ray hit any collider
-            if (hit.collider != null && hit.collider.gameObject.GetComponent<LaneBehaviour>() != null)
+            RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero, 0f, laneMask);
+
+            if (hit.collider != null)
             {
-                //Debug.Log("Clicked on: " + hit.collider.gameObject.name);
                 player.transform.position = hit.collider.transform.position;
             }
+
+            //// Cast a ray from the mouse position in any direction (Vector2.zero for a single point)
+            //RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
+
+            //// Check if the ray hit any collider
+            //if (hit.collider != null && hit.collider.gameObject.GetComponent<LaneBehaviour>() != null)
+            //{
+            //    //Debug.Log("Clicked on: " + hit.collider.gameObject.name);
+            //    player.transform.position = hit.collider.transform.position;
+            //}
         }
         if (card1.GetComponent<RectTransform>().eulerAngles.y >= 90 && cardRevealed == false)
         {
@@ -204,7 +215,7 @@ public class GameManager : MonoBehaviour
             //mask
             outfit1.transform.GetChild(5).GetComponent<Image>().sprite = parts[4][waveSerial[4] - '0'];
             //head
-            outfit1.transform.GetChild(5).GetComponent<Image>().sprite = parts[4][waveSerial[5] - '0'];
+            outfit1.transform.GetChild(6).GetComponent<Image>().sprite = parts[5][waveSerial[5] - '0'];
         }
         if (waveStart && currentTime > 0)
         {
@@ -233,6 +244,10 @@ public class GameManager : MonoBehaviour
             default:
                 break;
         }
+    }
+    void EntityAngry()
+    {
+        StartCoroutine(TakeDamage());
     }
 
     IEnumerator TakeDamage()
@@ -292,7 +307,6 @@ public class GameManager : MonoBehaviour
         spawnRateMin -= 1;
         spawnRateMax -= 1;
 
-        print("exit");
         Color current = cardDeck.GetComponent<Image>().color;
         cardDeck.GetComponent<Image>().color = new Color(current.r, current.g, current.b, 0);
         current = card1.GetComponent<Image>().color;
@@ -386,26 +400,53 @@ public class GameManager : MonoBehaviour
         GameObject entityObject = Instantiate(entity, new Vector3(laneXPos[randomLane], 6.6f, spawnZ), Quaternion.identity);
         EntityBehaviour behaviour = entityObject.GetComponent<EntityBehaviour>();
         behaviour.speed = speed;
-        //Create the parts for the entity, choosing random clothes, using the reference list
-        for (int i = 0; i < partNames.Length; i++)
+
+        //chance to spawn unwanted entity
+        //25%
+        int randomBad = Random.Range(0, 4);
+
+        if (randomBad == 3)
         {
-            GameObject part = new GameObject();
-            part.name = partNames[i];
+            //Choose the parts that equal the unwanted outfit
+            for (int i = 0; i < partNames.Length; i++)
+            {
+                GameObject part = new GameObject();
+                part.name = partNames[i];
 
-            part.transform.parent = entityObject.transform;
-            part.transform.localPosition = new Vector3(0, partPositions[i], -0.0001f);
-            SpriteRenderer renderer = part.AddComponent<SpriteRenderer>();
+                part.transform.parent = entityObject.transform;
+                part.transform.localPosition = new Vector3(0, partPositions[i], partZIndex[i]);
+                part.transform.localScale = partScales[i];
+                SpriteRenderer renderer = part.AddComponent<SpriteRenderer>();
 
-            int randomiser = Random.Range(0, parts[i].Count);
-            behaviour.serial += randomiser.ToString();
-            renderer.sprite = parts[i][randomiser];
+                //convert char to int
+                int outfitNum = waveSerial[i] - '0';
+                behaviour.serial += outfitNum.ToString();
+                renderer.sprite = parts[i][outfitNum];
+            }
+        }
+        else
+        {
+            //Create the parts for the entity, choosing random clothes, using the reference list
+            for (int i = 0; i < partNames.Length; i++)
+            {
+                GameObject part = new GameObject();
+                part.name = partNames[i];
+
+                part.transform.parent = entityObject.transform;
+                part.transform.localPosition = new Vector3(0, partPositions[i], partZIndex[i]);
+                part.transform.localScale = partScales[i];
+                SpriteRenderer renderer = part.AddComponent<SpriteRenderer>();
+
+                int randomiser = Random.Range(0, parts[i].Count);
+                behaviour.serial += randomiser.ToString();
+                renderer.sprite = parts[i][randomiser];
+            }
         }
         //print(behaviour.serial);
     }
 
     IEnumerator GameOver()
     {
-        print("game over");
         canPause = false;
         yield return new WaitForSeconds(0.5f);
         Time.timeScale = 0;

@@ -41,6 +41,7 @@ public class Buttons : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, IP
                 Actions.restartGame.Invoke();
                 break;
             case TYPE.Home:
+                SceneManager.LoadScene(0);
                 break;
             //case TYPE.BOXOPTION1:
             //    Actions.TextBoxColour(0);
