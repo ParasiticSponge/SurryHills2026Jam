@@ -10,7 +10,10 @@ public class Buttons : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, IP
     {
         Play,
         Settings,
-        Quit
+        Quit,
+        Pause,
+        Restart,
+        Home
     }
 
     public TYPE type;
@@ -30,6 +33,14 @@ public class Buttons : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, IP
                 break;
             case TYPE.Quit:
                 Application.Quit();
+                break;
+            case TYPE.Pause:
+                Actions.pauseGame.Invoke();
+                break;
+            case TYPE.Restart:
+                Actions.restartGame.Invoke();
+                break;
+            case TYPE.Home:
                 break;
             //case TYPE.BOXOPTION1:
             //    Actions.TextBoxColour(0);
@@ -74,10 +85,10 @@ public class Buttons : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, IP
     public void OnPointerEnter(PointerEventData eventData)
     {
         print("hovering");
-        Actions.Hover.Invoke(gameObject);
+        if (type != TYPE.Pause || type != TYPE.Restart || type != TYPE.Home) Actions.Hover.Invoke(gameObject);
     }
     public void OnPointerExit(PointerEventData eventData)
     {
-        Actions.HoverExit.Invoke(gameObject);
+        if (type != TYPE.Pause || type != TYPE.Restart || type != TYPE.Home) Actions.HoverExit.Invoke(gameObject);
     }
 }

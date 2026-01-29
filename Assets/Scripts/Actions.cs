@@ -11,4 +11,7 @@ public class Actions : MonoBehaviour
 
     public static Action<GameObject> Hover;
     public static Action<GameObject> HoverExit;
+
+    public static Action pauseGame;
+    public static Action restartGame;
 }

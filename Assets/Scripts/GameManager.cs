@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using static UnityEngine.GraphicsBuffer;
@@ -9,7 +11,11 @@ using static UnityEngine.InputSystem.OnScreen.OnScreenStick;
 
 public class GameManager : MonoBehaviour
 {
+    Volume volume;
+    ColorAdjustments colorAdjustments;
+
     GameObject canvas;
+    [SerializeField]
     Animator animator;
     public Text waveTimer;
     public GameObject tutorial;
@@ -27,6 +33,9 @@ public class GameManager : MonoBehaviour
     GameObject healthBar;
     GameObject camera;
 
+    float entitySpawnZ = -9;
+    float spawnZ = -9;
+    float zNum = 0.001f;
     public int entityCount = 0;
     int spawnRateMin = 20;
     int spawnRateMax = 30;
@@ -48,8 +57,10 @@ public class GameManager : MonoBehaviour
 
     float[] laneXPos = new float[] { -5.25f, -1.1f, 3.1f, 7.25f};
     float laneYPos = 6.6f;
-    string[] partNames = new string[] { "head", "mask", "top", "bottom", "hand" };
-    float[] partPositions = new float[] { 1.2f, 0.75f, -0.15f, -0.75f, 0 };
+    string[] partNames = new string[] { "top", "hand", "accessory", "hair", "mask", "head" };
+    float[] partPositions = new float[] { -0.197f, 0, 0.111f, 0.741f, 0.558f, 1.02f };
+    float[] partZIndex = new float[] { -0.01f, -0.02f, -0.03f, -0.04f, -0.05f, -0.06f };
+    Vector3[] partScales = new Vector3[] { new Vector3(1, 1, 1), new Vector3(1, 1, 1), new Vector3(1.1f, 0.7f, 1), new Vector3(1, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 1, 1) };
 
     public bool waveStart = false;
     int waveNum = 0;
@@ -58,15 +69,23 @@ public class GameManager : MonoBehaviour
     float currentTime = 30;
     bool cardRevealed = false;
 
+    bool canPause = true;
+    bool gamePaused = false;
+    bool endGame = false;
+
     public void OnEnable()
     {
         Actions.SendSerial += EvalSignal;
         Actions.Begin += StartGame;
+        Actions.pauseGame += Pause;
+        Actions.restartGame += ResetGame;
     }
     public void OnDisable()
     {
         Actions.SendSerial -= EvalSignal;
         Actions.Begin -= StartGame;
+        Actions.pauseGame -= Pause;
+        Actions.restartGame -= ResetGame;
     }
     private void Awake()
     {
@@ -76,16 +95,45 @@ public class GameManager : MonoBehaviour
         healthBar = FindObjectOfType<HealthBar>().gameObject;
         camera = FindObjectOfType<Camera>().gameObject;
         canvas = FindObjectOfType<Canvas>().gameObject;
+        volume = FindObjectOfType<Volume>();
         animator = canvas.GetComponent<Animator>();
         tutorial.SetActive(true);
 
         player.transform.position = new Vector3(-3.15f, -2.72f, player.transform.position.z);
     }
+    public void Pause()
+    {
+        if (canPause)
+        {
+            if (!gamePaused)
+            {
+                gamePaused = true;
+                Time.timeScale = 0f;
+                if (volume.profile.TryGet<ColorAdjustments>(out colorAdjustments))
+                {
+                    colorAdjustments.saturation.value = -100f;
+                }
+            }
+            else
+            {
+                gamePaused = false;
+                Time.timeScale = 1f;
+                if (volume.profile.TryGet<ColorAdjustments>(out colorAdjustments))
+                {
+                    colorAdjustments.saturation.value = 0f;
+                }
+            }
+        }
+    }
+
     private void ResetGame()
     {
+        Time.timeScale = 1;
         speed = 1f;
         spawnRateMin = 20;
         spawnRateMax = 30;
+        waveNum = 0;
+        StartGame();
     }
 
     // Start is called before the first frame update
@@ -102,6 +150,7 @@ public class GameManager : MonoBehaviour
     }
     IEnumerator EnterAnimation()
     {
+        canPause = true;
         screen.gameObject.SetActive(true);
         float duration = 1f;
         float start = 1f;
@@ -225,6 +274,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator BeginWave()
     {
+        spawnZ = entitySpawnZ;
         waveSerial = "";
         for (int i = 0; i < partNames.Length; i++)
         {
@@ -245,7 +295,7 @@ public class GameManager : MonoBehaviour
         cardDeck.GetComponent<Image>().color = new Color(current.r, current.g, current.b, 0);
         current = card1.GetComponent<Image>().color;
         card1.GetComponent<Image>().color = new Color(current.r, current.g, current.b, 0);
-        Transform child = card1.transform.Find("DeckImage");
+        Transform child = card1.transform.Find("DeckImage(Clone)");
         if (child != null)
             Destroy(child.gameObject);
         card1.GetComponent<Image>().sprite = deckBack;
@@ -319,6 +369,7 @@ public class GameManager : MonoBehaviour
     {
         CreateEntity();
         entityCount++;
+        spawnZ += zNum;
 
         float waitTime = Random.Range(spawnRateMin, spawnRateMax) / 10;
         // Pause for the allotted time
@@ -330,7 +381,7 @@ public class GameManager : MonoBehaviour
         //Choose a random lane
         int randomLane = Random.Range(0, 4);
         //Create the main entity body
-        GameObject entityObject = Instantiate(entity, new Vector3(laneXPos[randomLane], 6.6f, -1), Quaternion.identity);
+        GameObject entityObject = Instantiate(entity, new Vector3(laneXPos[randomLane], 6.6f, spawnZ), Quaternion.identity);
         EntityBehaviour behaviour = entityObject.GetComponent<EntityBehaviour>();
         behaviour.speed = speed;
         //Create the parts for the entity, choosing random clothes, using the reference list
@@ -340,7 +391,7 @@ public class GameManager : MonoBehaviour
             part.name = partNames[i];
 
             part.transform.parent = entityObject.transform;
-            part.transform.localPosition = new Vector3(0, partPositions[i], -1.1f);
+            part.transform.localPosition = new Vector3(0, partPositions[i], -0.0001f);
             SpriteRenderer renderer = part.AddComponent<SpriteRenderer>();
 
             int randomiser = Random.Range(0, parts[i].Count);
@@ -352,6 +403,16 @@ public class GameManager : MonoBehaviour
 
     IEnumerator GameOver()
     {
-        yield return 0;
+        print("game over");
+        canPause = false;
+        yield return new WaitForSeconds(0.5f);
+        Time.timeScale = 0;
+        yield return new WaitForSecondsRealtime(1f);
+
+        animator.updateMode = AnimatorUpdateMode.UnscaledTime;
+        animator.Play("GameOver", 0, 0f);
+        //yield return new WaitForSeconds(2.5f);
+
+        //animator.updateMode = AnimatorUpdateMode.UnscaledTime;
     }
 }
