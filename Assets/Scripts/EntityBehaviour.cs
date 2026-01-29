@@ -1,9 +1,6 @@
 using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using System;
-using UnityEngine.UI;
 
 public class EntityBehaviour : MonoBehaviour
 {

@@ -2244,6 +2244,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 8b1075d819e38df47be9b889b88b43a3, type: 3}
   - {fileID: 21300000, guid: 9581ad79c19997d4ebc8d9de0845cadd, type: 3}
   - {fileID: 21300000, guid: ba4d5f30bb02a9943815b2d600ec9094, type: 3}
+  - {fileID: 21300000, guid: 4f0efc7616942dc428a264b1f549b9af, type: 3}
+  - {fileID: 21300000, guid: 8c05e29fa0d0f974a85b253f01585439, type: 3}
   hand:
   - {fileID: 21300000, guid: ac6a4c9c9abd02c468396658d216b919, type: 3}
   - {fileID: 21300000, guid: c5a3d62d7a5a0044586c140e9a5b14f6, type: 3}
@@ -2251,16 +2253,24 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 62ebd669303a0ff4a8ff65823463395a, type: 3}
   accessory:
   - {fileID: 21300000, guid: 1aed19a7726179e499dfbe500d29a347, type: 3}
+  - {fileID: 21300000, guid: 4606a366fbb24e14caee822c4123ccec, type: 3}
   hair:
   - {fileID: 21300000, guid: 6a145f2451af9bd48a5e62cbe826d882, type: 3}
   - {fileID: 21300000, guid: 199c0271e6aa9fc4da0629294f32b341, type: 3}
+  - {fileID: 21300000, guid: 564bf700b168ed74693a17a0cd1e6085, type: 3}
+  - {fileID: 21300000, guid: 1b823a702ffab6549a0f38ed81f7efca, type: 3}
+  - {fileID: 21300000, guid: 78f6a76141734d04ea25fa2165ba07cb, type: 3}
   mask:
   - {fileID: 21300000, guid: 3574a1b6057eeb34ebaf02e8f009128c, type: 3}
   - {fileID: 21300000, guid: ac16fda5bd5c1cc42929c5c84efd0b11, type: 3}
+  - {fileID: 21300000, guid: ec83cf062dde854458c4314326270887, type: 3}
+  - {fileID: 21300000, guid: c6b7c7595ffbd37438372a82a039e053, type: 3}
+  - {fileID: 21300000, guid: b6a5b53276977454787e3afc9a5e783f, type: 3}
   head:
   - {fileID: 21300000, guid: c4fb6fbfb19e0c5469338806ffabfc9d, type: 3}
   - {fileID: 21300000, guid: a8a13f457780ea54d822cf2ff6c85a75, type: 3}
   - {fileID: 21300000, guid: 5c82919789958d54c804f35e2dca7dfc, type: 3}
+  - {fileID: 21300000, guid: c29160bec043f33449302d3c4b711434, type: 3}
   health: 100
   waveStart: 0
 --- !u!1 &838595066

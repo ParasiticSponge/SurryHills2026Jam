@@ -206,6 +206,13 @@ public class GameManager : MonoBehaviour
             GameObject outfit1 = Instantiate(outfitReveal, card1.transform);
             //top
             outfit1.transform.GetChild(1).GetComponent<Image>().sprite = parts[0][waveSerial[0] - '0'];
+            //2.6 and //1.32
+            float x = outfit1.transform.GetChild(1).GetComponent<RectTransform>().localScale.x;
+            float z = outfit1.transform.GetChild(1).GetComponent<RectTransform>().localScale.z;
+            if (waveSerial[0] - '0' == 3 || waveSerial[0] - '0' == 4)
+                outfit1.transform.GetChild(1).GetComponent<RectTransform>().localScale = new Vector3(x, 2.6f, z);
+            else
+                outfit1.transform.GetChild(1).GetComponent<RectTransform>().localScale = new Vector3(x, 1.32f, z);
             //hand
             outfit1.transform.GetChild(2).GetComponent<Image>().sprite = parts[1][waveSerial[1] - '0'];
             //acc
