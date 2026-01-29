@@ -90,6 +90,7 @@ public class GameManager : MonoBehaviour
     }
     private void Awake()
     {
+        Time.timeScale = 1;
         //Create a reference to the parts
         parts = new List<List<Sprite>> { top, hand, accessory, hair, mask, head };
         player = FindObjectOfType<PlayerBehaviour>().gameObject;
@@ -98,6 +99,7 @@ public class GameManager : MonoBehaviour
         canvas = FindObjectOfType<Canvas>().gameObject;
         volume = FindObjectOfType<Volume>();
         animator = canvas.GetComponent<Animator>();
+        animator.updateMode = AnimatorUpdateMode.Normal;
         tutorial.SetActive(true);
 
         player.transform.position = new Vector3(-3.15f, -2.72f, player.transform.position.z);

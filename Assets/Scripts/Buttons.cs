@@ -86,10 +86,10 @@ public class Buttons : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, IP
     public void OnPointerEnter(PointerEventData eventData)
     {
         print("hovering");
-        if (type != TYPE.Pause || type != TYPE.Restart || type != TYPE.Home) Actions.Hover.Invoke(gameObject);
+        if (type != TYPE.Pause && type != TYPE.Restart && type != TYPE.Home) Actions.Hover.Invoke(gameObject);
     }
     public void OnPointerExit(PointerEventData eventData)
     {
-        if (type != TYPE.Pause || type != TYPE.Restart || type != TYPE.Home) Actions.HoverExit.Invoke(gameObject);
+        if (type != TYPE.Pause && type != TYPE.Restart && type != TYPE.Home) Actions.HoverExit.Invoke(gameObject);
     }
 }

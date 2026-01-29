@@ -14,6 +14,7 @@ public class MenuManager : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
+        Time.timeScale = 1;
         screen.gameObject.SetActive(false);
     }
 

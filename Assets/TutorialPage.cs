@@ -37,7 +37,7 @@ public class TutorialPage : MonoBehaviour
     void ChangeNumber(int value)
     {
         number += value;
-        animator.SetFloat("Page", number);
+        //animator.SetFloat("Page", number);
         switch (number)
         {
             case 1:
