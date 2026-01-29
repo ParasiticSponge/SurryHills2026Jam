@@ -90,7 +90,7 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         //Create a reference to the parts
-        parts = new List<List<Sprite>> { head, mask, top, bottom, hand };
+        parts = new List<List<Sprite>> { top, mask, top, bottom, hand };
         player = FindObjectOfType<PlayerBehaviour>().gameObject;
         healthBar = FindObjectOfType<HealthBar>().gameObject;
         camera = FindObjectOfType<Camera>().gameObject;
@@ -193,16 +193,18 @@ public class GameManager : MonoBehaviour
             cardRevealed = true;
             card1.GetComponent<Image>().sprite = deckFront;
             GameObject outfit1 = Instantiate(outfitReveal, card1.transform);
-            //head
-            outfit1.transform.GetChild(1).GetComponent<Image>().sprite = parts[0][waveSerial[0] - '0'];
-            //mask
-            outfit1.transform.GetChild(2).GetComponent<Image>().sprite = parts[1][waveSerial[1] - '0'];
             //top
+            outfit1.transform.GetChild(1).GetComponent<Image>().sprite = parts[0][waveSerial[0] - '0'];
+            //hand
+            outfit1.transform.GetChild(2).GetComponent<Image>().sprite = parts[1][waveSerial[1] - '0'];
+            //acc
             outfit1.transform.GetChild(3).GetComponent<Image>().sprite = parts[2][waveSerial[2] - '0'];
-            //bottom
+            //hair
             outfit1.transform.GetChild(4).GetComponent<Image>().sprite = parts[3][waveSerial[3] - '0'];
-            //hands
+            //mask
             outfit1.transform.GetChild(5).GetComponent<Image>().sprite = parts[4][waveSerial[4] - '0'];
+            //head
+            outfit1.transform.GetChild(5).GetComponent<Image>().sprite = parts[4][waveSerial[5] - '0'];
         }
         if (waveStart && currentTime > 0)
         {
