@@ -57,10 +57,13 @@ public class TutorialPage : MonoBehaviour
                 break;
         }
 
-        if (number == 1 && previousButton)
-            previousButton.SetActive(false);
-        else if (number != 1 && !previousButton)
-            previousButton.SetActive(true);
+        if (previousButton != null)
+        {
+            if (number == 1 && previousButton.activeSelf == true)
+                previousButton.SetActive(false);
+            else if (number != 1 && previousButton.activeSelf == false)
+                previousButton.SetActive(true);
+        }
 
         if (number == 5)
         {

@@ -9,11 +9,28 @@ using static UnityEngine.InputSystem.OnScreen.OnScreenStick;
 
 public class GameManager : MonoBehaviour
 {
+    GameObject canvas;
+    Animator animator;
+    public Text waveTimer;
     public GameObject tutorial;
+    public GameObject cardDeck;
+    public GameObject card1;
+    public GameObject card2;
+    public GameObject waveBoard;
+    public GameObject waveOldNum;
+    public GameObject waveNewNum;
+    public Sprite deckFront;
+    public Sprite deckBack;
+    public GameObject outfitReveal;
 
     public Image screen;
     GameObject healthBar;
     GameObject camera;
+
+    public int entityCount = 0;
+    int spawnRateMin = 20;
+    int spawnRateMax = 30;
+    public float speed = 1f;
 
     public Slider waveSlider;
 
@@ -37,9 +54,9 @@ public class GameManager : MonoBehaviour
     public bool waveStart = false;
     int waveNum = 0;
     string waveSerial = "";
-    int time = 120;
-    int currentTime = 120;
-    public float speed = 1f;
+    float time = 30;
+    float currentTime = 30;
+    bool cardRevealed = false;
 
     public void OnEnable()
     {
@@ -58,14 +75,23 @@ public class GameManager : MonoBehaviour
         player = FindObjectOfType<PlayerBehaviour>().gameObject;
         healthBar = FindObjectOfType<HealthBar>().gameObject;
         camera = FindObjectOfType<Camera>().gameObject;
+        canvas = FindObjectOfType<Canvas>().gameObject;
+        animator = canvas.GetComponent<Animator>();
         tutorial.SetActive(true);
+
+        player.transform.position = new Vector3(-3.15f, -2.72f, player.transform.position.z);
+    }
+    private void ResetGame()
+    {
+        speed = 1f;
+        spawnRateMin = 20;
+        spawnRateMax = 30;
     }
 
     // Start is called before the first frame update
     void StartGame()
     {
         waveSlider.value = 0;
-        print("start");
         StartCoroutine(Begin());
     }
 
@@ -76,7 +102,6 @@ public class GameManager : MonoBehaviour
     }
     IEnumerator EnterAnimation()
     {
-        print("enter anim");
         screen.gameObject.SetActive(true);
         float duration = 1f;
         float start = 1f;
@@ -114,11 +139,36 @@ public class GameManager : MonoBehaviour
                 player.transform.position = hit.collider.transform.position;
             }
         }
+        if (card1.GetComponent<RectTransform>().eulerAngles.y >= 90 && cardRevealed == false)
+        {
+            cardRevealed = true;
+            card1.GetComponent<Image>().sprite = deckFront;
+            GameObject outfit1 = Instantiate(outfitReveal, card1.transform);
+            //head
+            outfit1.transform.GetChild(1).GetComponent<Image>().sprite = parts[0][waveSerial[0] - '0'];
+            //mask
+            outfit1.transform.GetChild(2).GetComponent<Image>().sprite = parts[1][waveSerial[1] - '0'];
+            //top
+            outfit1.transform.GetChild(3).GetComponent<Image>().sprite = parts[2][waveSerial[2] - '0'];
+            //bottom
+            outfit1.transform.GetChild(4).GetComponent<Image>().sprite = parts[3][waveSerial[3] - '0'];
+            //hands
+            outfit1.transform.GetChild(5).GetComponent<Image>().sprite = parts[4][waveSerial[4] - '0'];
+        }
+        if (waveStart && currentTime > 0)
+        {
+            currentTime -= Time.deltaTime;
+            int minutes = (int)(currentTime / 60);
+            int seconds = (int)(currentTime % 60);
+            string minShow = minutes.ToString();
+            string secShow = seconds.ToString();
+            if (minutes < 10) minShow = "0" + minShow;
+            if (seconds < 10) secShow = "0" + secShow;
+            waveTimer.text = minShow + ":" + secShow;
+        }
     }
     void EvalSignal(string serial, sbyte status)
     {
-        print(waveSerial);
-        print(serial);
         switch (status)
         {
             case 1:
@@ -163,12 +213,8 @@ public class GameManager : MonoBehaviour
     }
     IEnumerator GameLogic()
     {
-        print("game");
-        if (health > 0)
-        {
-            yield return StartCoroutine(BeginWave());
-            yield return StartCoroutine(SpawnLoop());
-        }
+        yield return StartCoroutine(BeginWave());
+        yield return StartCoroutine(SpawnLoop());
     }
 
     IEnumerator Intro()
@@ -179,6 +225,39 @@ public class GameManager : MonoBehaviour
 
     IEnumerator BeginWave()
     {
+        waveSerial = "";
+        for (int i = 0; i < partNames.Length; i++)
+        {
+            int randomiser = Random.Range(0, parts[i].Count);
+            waveSerial += randomiser.ToString();
+        }
+
+        currentTime = time;
+        waveTimer.text = "00:00";
+        //increase entity speed
+        speed += 0.5f;
+        //decrease spawn rate
+        spawnRateMin -= 1;
+        spawnRateMax -= 1;
+
+        print("exit");
+        Color current = cardDeck.GetComponent<Image>().color;
+        cardDeck.GetComponent<Image>().color = new Color(current.r, current.g, current.b, 0);
+        current = card1.GetComponent<Image>().color;
+        card1.GetComponent<Image>().color = new Color(current.r, current.g, current.b, 0);
+        Transform child = card1.transform.Find("DeckImage");
+        if (child != null)
+            Destroy(child.gameObject);
+        card1.GetComponent<Image>().sprite = deckBack;
+        current = card2.GetComponent<Image>().color;
+        card2.GetComponent<Image>().color = new Color(current.r, current.g, current.b, 0);
+        current = waveBoard.GetComponent<Image>().color;
+        waveBoard.GetComponent<Image>().color = new Color(current.r, current.g, current.b, 0);
+        current = waveOldNum.GetComponent<Text>().color;
+        waveOldNum.GetComponent<Text>().color = new Color(current.r, current.g, current.b, 0);
+        current = waveNewNum.GetComponent<Text>().color;
+        waveNewNum.GetComponent<Text>().color = new Color(current.r, current.g, current.b, 0);
+
         float duration = 1f;
         float start = 0;
         float target = waveSlider.maxValue;
@@ -193,16 +272,15 @@ public class GameManager : MonoBehaviour
             yield return null; // wait one frame
         }
 
-        //change wave number
-        yield return new WaitForSeconds(2f);
+        waveOldNum.GetComponent<Text>().text = waveNum.ToString();
         waveNum++;
-        waveSerial = "";
-        waveStart = true;
-        for (int i = 0; i < partNames.Length; i++)
-        {
-            int randomiser = Random.Range(0, parts[i].Count);
-            waveSerial += randomiser.ToString();
-        }
+        waveNewNum.GetComponent<Text>().text = waveNum.ToString();
+
+        animator.Play("CardReveal", 0, 0f);
+        cardRevealed = false;
+
+        //float animationLength = animator.GetCurrentAnimatorStateInfo(0).length;
+        yield return new WaitForSeconds(2.8f);
 
         duration = 1f;
         start = waveSlider.maxValue;
@@ -217,26 +295,32 @@ public class GameManager : MonoBehaviour
             waveSlider.value = Mathf.Lerp(start, target, t);
             yield return null; // wait one frame
         }
+        waveStart = true;
     }
 
     IEnumerator SpawnLoop()
     {
-        float duration = 120f;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
+        while (currentTime > 0)
         {
-            elapsed += Time.deltaTime;
             yield return StartCoroutine(SpawnEntity());
         }
 
+        //wait until all entities destroyed
+        while (entityCount > 0)
+        {
+            yield return null;
+        }
+        yield return new WaitForSeconds(1f);
+
+        waveStart = false;
         StartCoroutine(GameLogic());
     }
     IEnumerator SpawnEntity()
     {
         CreateEntity();
+        entityCount++;
 
-        int waitTime = Random.Range(2, 6);
+        float waitTime = Random.Range(spawnRateMin, spawnRateMax) / 10;
         // Pause for the allotted time
         yield return new WaitForSeconds(waitTime);
     }

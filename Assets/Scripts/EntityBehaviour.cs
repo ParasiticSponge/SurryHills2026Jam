@@ -6,6 +6,7 @@ using System;
 
 public class EntityBehaviour : MonoBehaviour
 {
+    GameManager gameManager;
     public bool canInteract = true;
     public float maxSpeed = 1;
     public float speed = 1;
@@ -28,6 +29,10 @@ public class EntityBehaviour : MonoBehaviour
     private void OnDisable()
     {
         TriggerAdmit += ChangeAdmitted;
+    }
+    private void Awake()
+    {
+        gameManager = FindObjectOfType<GameManager>();
     }
     // Start is called before the first frame update
     void Start()
@@ -80,6 +85,7 @@ public class EntityBehaviour : MonoBehaviour
     IEnumerator Dissapear()
     {
         speed = 1;
+        gameManager.entityCount -= 1;
 
         float duration = 0.5f;
         float startTransparency = 1;
